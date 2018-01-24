@@ -4,6 +4,7 @@ Vue.use(Vuetify);
 import * as VueCookie from "vue-cookie";
 Vue.use(VueCookie);
 
+import App from "./components/App";
 import Router from "./router/index";
 import "./../../node_modules/vuetify/dist/vuetify.min.css";
 Vue.config.productionTip = false;
@@ -15,6 +16,6 @@ let v = new Vue({
   template: "<app></app>",
   el: "root",
   components: {
-    // App,
+    App,
   },
 });

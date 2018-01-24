@@ -46,6 +46,9 @@ module.exports = {
           exclude: /node_modules/,
           loader: "html-loader?exportAsEs6Default"
       }, {
+        test: /\.json$/,
+        loader: 'json-loader'
+      }, {
         test: /\.tsx?$/,
         loader: 'ts-loader',
         exclude: /node_modules/,

@@ -3,7 +3,7 @@ import VueRouter from "vue-router";
 // import * as Auth from "../components/pages/Authentication";
 //pages
 // import Authentication from "./../components/pages/Authentication/Authentication";
-// import Home from "../components/pages/Home";
+import Home from "../components/pages/Home";
 
 // Global components
 // import Header from "./../components/pages/Header/Header";
@@ -21,14 +21,8 @@ const router = new VueRouter({
       path: "/",
       name: "Home",
       components: {
+        default: Home,
       },
-      // meta: {
-      //   requiredAuth: true
-      // }
-    }, {
-      path: "/login",
-      name: "Authentication",
-      // component: Authentication,
     }
   ]
 });
@@ -37,12 +31,12 @@ const router = new VueRouter({
 // router.beforeEach((to, from, next) => {
 //   if (to.path !== '/login') {
 //     if (Auth.default.user.authenticated) {
-//       next()
+//       next();
 //     } else {
-//       router.push('/login')
+//       router.push('/login');
 //     }
 //   } else {
-//     next()
+//     next();
 //   }
 // })
 
