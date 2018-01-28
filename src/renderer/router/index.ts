@@ -3,8 +3,8 @@ import VueRouter from "vue-router";
 // import * as Auth from "../components/pages/Authentication";
 //pages
 // import Authentication from "./../components/pages/Authentication/Authentication";
-import Home from "../components/pages/Home";
-
+import Home from "./../components/pages/Home";
+import Followers from "./../components/pages/Lists/Followers/Followers";
 // Global components
 // import Header from "./../components/pages/Header/Header";
 // import List from "./../components/List/List";
@@ -20,9 +20,11 @@ const router = new VueRouter({
     {
       path: "/",
       name: "Home",
-      components: {
-        default: Home,
-      },
+      component: Home,
+    }, {
+      path: "/lists/followers",
+      name: "followersList",
+      component: Followers,
     }
   ]
 });

@@ -1,0 +1,16 @@
+<div>
+  Followers List
+
+  <v-list>
+      <v-list-tile avatar v-for="follower in followers" :key="follower.user._id">
+        <v-list-tile-avatar>
+          <img v-bind:src="follower.user.logo" alt="">
+        </v-list-tile-avatar>
+        <v-list-tile-content>
+          <v-list-tile-title v-html="follower.user.display_name"></v-list-tile-title>
+          <v-list-tile-sub-title v-html="follower.user.bio"></v-list-tile-sub-title>
+        </v-list-tile-content>
+      </v-list-tile>
+  </v-list>
+
+</div>

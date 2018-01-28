@@ -16,6 +16,7 @@ export default class App extends Vue {
   components: [
     RouterView
   ];
+  drawer = null;
   socket: SocketIO.Client;
   created() {
     console.log("init");
