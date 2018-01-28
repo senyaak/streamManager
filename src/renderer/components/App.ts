@@ -16,7 +16,6 @@ export default class App extends Vue {
   components: [
     RouterView
   ];
-  // token: string;
   socket: SocketIO.Client;
   created() {
     console.log("init");
