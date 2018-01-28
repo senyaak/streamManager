@@ -5,15 +5,21 @@ import axios from "axios";
 import * as querystring from "querystring";
 import auth_template from "./auth_twitch_template.html"
 import User from "./user";
+import authApi from "./auth"
+import router from "./routing"
+
 // config
 const streamlabs_conf = require("./../../config/streamlabs.json");
-const twitch_conf =     require("./../../config/twitch.json");
+const twitch_conf     = require("./../../config/twitch.json");
+const serverConf      = require("./../../config/express.json");
 
-const app: electron.App = electron.app;
-
+// server
 var user: User = new User();
 let serv = express();
+serv.listen(serverConf.port);
 
+// electorn
+const app: electron.App = electron.app;
 let mainWindow: electron.BrowserWindow;
 let authWindow: electron.BrowserWindow;
 
@@ -73,27 +79,18 @@ app.on("ready", () => {
 
   // streamlabs auth request
   serv.get("/streamlabs", (req, res) => {
-    res.send("");
-    let code = req.query.code;
-
-    var {client_id, client_secret,redirect_uri} = streamlabs_conf;
-    axios.post(`https://streamlabs.com/api/v1.0/token`, {
-      grant_type: "authorization_code",
-      client_id: client_id,
-      client_secret: client_secret,
-      redirect_uri: redirect_uri,
-      code: code
-    }).then(({data}) => {
+    return authApi.getStreamlabsToken(req, res).then(({data}) => {
       console.log("got streamlabs", data);
       user.streamlabsToken = data.access_token;
       mainWindow.webContents.send("token-got", user.streamlabsToken);
       authWindow.close();
 
-      return startTwitchAuth();
+      // TODO split fn to avoid window manipulations in it
+      return authApi.startTwitchAuth(authWindow);
     }).then((token) => {
       console.log(`end auth - token `,token)
       user.twitchToken = token.access_token;
-      return getTwitchUser().then((twitchUser) => {
+      return authApi.getTwitchUser(user.twitchToken, twitch_conf.client_id).then((twitchUser) => {
         user.name = twitchUser.name;
         user.twitchFollowersLink = twitchUser._links.follows;
         user.twitchSubscriptionsLink = twitchUser._links.subscriptions;
@@ -101,19 +98,18 @@ app.on("ready", () => {
       });
       // TODO more steps??
     }).then(() => {
+      router(serv, user);
       //show main window
       mainWindow.show();
     }).catch((err) => {
       console.log("Something went wrong, terminate process", err);
       app.quit();
-    });
+    })
   });
-
 
   serv.get("/twitch", (req, res) => {
     res.send(auth_template);
   });
-  serv.listen(3000);
 });
 
 // close app
@@ -122,76 +118,3 @@ app.on("window-all-closed", function () {
     app.quit();
   }
 });
-
-//
-// app.on("activate", function () {
-//   if (mainWindow === null) {
-//     createMainWindow();
-//   }
-// });
-
-function startTwitchAuth(): Promise<any> {
-  console.log("start twitch auth")
-  let resolve;
-  let responceType = "token";
-  let scopes = "user:edit+channel_subscriptions+channel_read";
-  let twitchAuth = `https://api.twitch.tv/kraken/oauth2/authorize?client_id=${twitch_conf.client_id}&redirect_uri=${twitch_conf.redirect_uri}&response_type=${responceType}&scope=${scopes}`;
-
-  authWindow = new electron.BrowserWindow({
-    width: 800,
-    height: 500,
-    resizable: true,
-    webPreferences: {
-      nodeIntegration: true,
-    },
-  });
-  electron.ipcMain.once("twitch-token", (event, location) => {
-    var token = querystring.parse(location.href.replace("http://localhost:3000/twitch#", ""));
-    authWindow.close();
-    (<any>authWindow) = null;
-    console.log("openDevTools", token)
-    resolve(token);
-  });
-  authWindow.loadURL(twitchAuth);
-  authWindow.show();
-  return new Promise((res) => resolve = res);
-}
-
-function getTwitchUser() {
-  var headers = {
-    Authorization: `OAuth ${user.twitchToken}`,
-    "Client-ID": twitch_conf.client_id,
-  }
-  return axios.get(`https://api.twitch.tv/kraken/channel`, {headers: {...headers}}).then(({data}) => {
-    console.log("get name", data);
-    return data;
-  });
-}
-
-function getDataFromTwitch() {
-  // get user info
-  var headers = {
-    Authorization: `OAuth ${user.twitchToken}`,
-    "Client-ID": twitch_conf.client_id,
-  };
-  axios(
-  {
-    method: "GET",
-    url: `https://api.twitch.tv/kraken/channel`,
-    headers: {...headers}
-  }).then(({data}) => {
-    Promise.all([
-      axios({
-        method: "GET",
-        url: user.twitchFollowersLink,
-        headers: {...headers},
-      }), axios({
-        method: "GET",
-        url: user.twitchSubscriptionsLink,
-        headers: {...headers},
-      })
-    ]).then((result) => {
-      mainWindow.webContents.send("got-user-data", [user,...result]);
-    });
-  });
-}
